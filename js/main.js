@@ -27,12 +27,21 @@ playBtn.onclick = () => {
   startLoop();
 };
 
+// Mode switcher
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    viz.setMode(btn.dataset.mode);
+  };
+});
+
 function startLoop() {
   if (looping) return;
   looping = true;
   (function loop() {
     if (!audio.playing) { looping = false; playBtn.textContent = '▶ Play'; return; }
-    viz.draw(audio.getFrequencyData());
+    viz.draw(audio.getFrequencyData(), audio.getTimeData());
     requestAnimationFrame(loop);
   })();
 }
