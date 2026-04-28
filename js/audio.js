@@ -6,6 +6,8 @@ export class AudioManager {
     this.freqData = null;
     this.timeData = null;
     this.playing = false;
+    this.isMic = false;
+    this.micStream = null;
   }
 
   init() {
@@ -21,6 +23,7 @@ export class AudioManager {
 
   async loadFile(file) {
     this.init();
+    this.stopMic();
     if (this.source) { this.source.disconnect(); this.source = null; }
     const buf = await file.arrayBuffer();
     const audio = await this.ctx.decodeAudioData(buf);
@@ -28,6 +31,27 @@ export class AudioManager {
     this.source.buffer = audio;
     this.source.connect(this.analyser);
     this.source.onended = () => { this.playing = false; };
+    this.isMic = false;
+  }
+
+  async startMic() {
+    this.init();
+    if (this.source) { this.source.disconnect(); this.source = null; }
+    this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    this.source = this.ctx.createMediaStreamSource(this.micStream);
+    this.source.connect(this.analyser);
+    // Disconnect analyser from destination to prevent feedback
+    this.analyser.disconnect();
+    this.playing = true;
+    this.isMic = true;
+  }
+
+  stopMic() {
+    if (this.micStream) { this.micStream.getTracks().forEach(t => t.stop()); this.micStream = null; }
+    if (this.source && this.isMic) { this.source.disconnect(); this.source = null; }
+    if (this.ctx && this.analyser) this.analyser.connect(this.ctx.destination);
+    this.playing = false;
+    this.isMic = false;
   }
 
   play() {

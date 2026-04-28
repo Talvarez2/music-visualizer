@@ -6,25 +6,48 @@ const viz = new Visualizer(document.getElementById('canvas'));
 const fileInput = document.getElementById('fileInput');
 const loadBtn = document.getElementById('loadBtn');
 const playBtn = document.getElementById('playBtn');
+const micBtn = document.getElementById('micBtn');
 const fileName = document.getElementById('fileName');
 
 let looping = false;
 
 loadBtn.onclick = () => fileInput.click();
 
-fileInput.onchange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+async function handleFile(file) {
+  if (!file || !file.type.startsWith('audio/')) return;
   fileName.textContent = file.name;
   await audio.loadFile(file);
   playBtn.disabled = false;
-};
+}
+
+fileInput.onchange = (e) => handleFile(e.target.files[0]);
+
+// Drag and drop
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  handleFile(e.dataTransfer.files[0]);
+});
 
 playBtn.onclick = () => {
   audio.play();
   playBtn.disabled = true;
   playBtn.textContent = '⏸ Playing';
   startLoop();
+};
+
+micBtn.onclick = async () => {
+  if (audio.isMic) {
+    audio.stopMic();
+    micBtn.textContent = '🎤 Mic';
+    playBtn.textContent = '▶ Play';
+  } else {
+    await audio.startMic();
+    micBtn.textContent = '⏹ Stop Mic';
+    playBtn.disabled = true;
+    playBtn.textContent = '🎤 Mic Active';
+    startLoop();
+  }
 };
 
 // Mode switcher
